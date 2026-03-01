@@ -33,3 +33,8 @@ openclaw channels status
 openclaw channels logs --channel whatsapp --lines 120
 openclaw gateway --token <GATEWAY_TOKEN> health
 ```
+
+## 5. 文档主仓（v2rayN）
+
+v2rayN 相关文档已迁移到 deployer：
+- https://github.com/ShengNW/deployer/tree/main/middleware/v2ray/v2rayN
