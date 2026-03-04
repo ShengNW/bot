@@ -23,7 +23,7 @@ OpenClaw WhatsApp Bot（A 路线：官方包 + 补丁脚本化 + 版本锁定）
 - ✅ WhatsApp 405 兼容补丁：`scripts/apply_whatsapp_patch.sh`
 - ✅ 一键健康检查：`scripts/doctor.sh`
 - ✅ 最终验收脚本：`scripts/verify.sh`
-- ✅ Windows 代理桥接文档：`ops/windows/v2rayn-portproxy.md`
+- ✅ v2rayN 文档主仓：`deployer/middleware/v2ray/v2rayN`（bot 仓仅保留引用）
 - ✅ 机器人工作区模板：`workspace/*.md`
 
 ### 快速开始
@@ -124,7 +124,7 @@ openclaw --version
 ```
 
 3. **网络自检（国内环境）**
-- 先按 `ops/windows/v2rayn-portproxy.md` 完成 Windows 侧桥接。
+- 先按 deployer 主文档完成 Windows 侧桥接（见下方 API 文档中的 v2rayN 文档仓）。
 - 再在 WSL 验证：
 ```bash
 HOST_IP=$(ip route | awk '/default/ {print $3; exit}')
@@ -244,6 +244,7 @@ Gateway Health: OK
 ```
 
 ### API文档
+- deployer v2rayN 文档：https://github.com/ShengNW/deployer/tree/main/middleware/v2ray/v2rayN
 - OpenClaw CLI：https://docs.openclaw.ai/cli
 - Router API（OpenAI-compatible）：`https://test-router.yeying.pub/v1`
 

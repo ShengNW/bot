@@ -1,48 +1,22 @@
-# Windows v2rayN + WSL 代理桥接说明
+# v2rayN 文档引用说明（已迁移到 deployer）
 
-适用场景：
-- v2rayN 在 Windows 监听 `127.0.0.1:10808`
-- WSL 里的应用无法直接使用该代理
+老板要求：v2ray 相关部署与运维文档统一放到 deployer 仓库维护。
 
-## 1) Windows 管理员 PowerShell
+## 文档主仓
 
-```powershell
-# 查看 v2rayN 是否监听（示例端口 10808）
-netstat -ano | findstr :10808
+- 目录：`deployer/middleware/v2ray/v2rayN`
+- 在线地址：<https://github.com/ShengNW/deployer/tree/main/middleware/v2ray/v2rayN>
 
-# 先删除旧规则（不存在可忽略报错）
-netsh interface portproxy delete v4tov4 listenaddress=0.0.0.0 listenport=10810
+## bot 仓库职责
 
-# 新增桥接：WSL -> Windows 代理
-netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=10810 connectaddress=127.0.0.1 connectport=10808
+- `bot` 仓库只保留引用入口，不再维护 v2rayN 细节，避免双份文档漂移。
+- 如需调整 v2rayN 部署步骤，请到 deployer 对应目录修改。
 
-# 验证规则
-netsh interface portproxy show v4tov4
-```
+## 快速跳转
 
-预期：
-```text
-0.0.0.0  10810  127.0.0.1  10808
-```
-
-## 2) WSL 侧验证
-
-```bash
-HOST_IP=$(ip route | awk '/default/ {print $3; exit}')
-curl --socks5-hostname "$HOST_IP:10810" https://api.ipify.org
-```
-
-## 3) WSL DNS 固定（推荐）
-
-```bash
-sudo tee /etc/wsl.conf >/dev/null <<'CFG'
-[network]
-generateResolvConf = false
-CFG
-
-sudo rm -f /etc/resolv.conf
-sudo tee /etc/resolv.conf >/dev/null <<'DNS'
-nameserver 1.1.1.1
-nameserver 8.8.8.8
-DNS
-```
+- 总览：<https://github.com/ShengNW/deployer/blob/main/middleware/v2ray/v2rayN/README.md>
+- 安装：<https://github.com/ShengNW/deployer/blob/main/middleware/v2ray/v2rayN/install.md>
+- 代理桥：<https://github.com/ShengNW/deployer/blob/main/middleware/v2ray/v2rayN/portproxy.md>
+- WSL 网络：<https://github.com/ShengNW/deployer/blob/main/middleware/v2ray/v2rayN/wsl-network.md>
+- OpenClaw 联动：<https://github.com/ShengNW/deployer/blob/main/middleware/v2ray/v2rayN/openclaw-integration.md>
+- 排障：<https://github.com/ShengNW/deployer/blob/main/middleware/v2ray/v2rayN/troubleshooting.md>
