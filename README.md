@@ -25,8 +25,29 @@ OpenClaw WhatsApp Bot（A 路线：官方包 + 补丁脚本化 + 版本锁定）
 - ✅ 最终验收脚本：`scripts/verify.sh`
 - ✅ v2rayN 文档主仓：`deployer/middleware/v2ray/v2rayN`（bot 仓仅保留引用）
 - ✅ 机器人工作区模板：`workspace/*.md`
+- ✅ Rust 全栈控制台（钱包登录+Web UI+多实例编排）：docs/rust-control-plane.md
+- ✅ 单命令部署入口：`scripts/deploy_full_stack.sh`
 
 ### 快速开始
+
+#### Rust 控制台（推荐）
+
+```bash
+cd /home/administrator/code/bot_hub
+bash scripts/deploy_full_stack.sh
+```
+
+浏览器访问：
+- http://127.0.0.1:3900/
+
+说明：
+- 该控制台支持钱包登录后创建/启动多个 WhatsApp 与 DingTalk 实例。
+- 实例通过 OpenClaw profile 隔离，互不覆盖配置。
+- 详细接口与排障见：`docs/rust-control-plane.md`
+
+Rust 环境说明：
+- 源码部署：不用手工安装 Rust，`scripts/bootstrap_full_stack.sh` 会自动安装 rustup/cargo。
+- 仅使用已部署服务：不需要 Rust。
 
 #### 环境要求
 
