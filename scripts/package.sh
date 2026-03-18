@@ -12,7 +12,7 @@ worktree_dir=""
 
 binary_rel="rust/control-plane/target/release/bot-hub-control-plane"
 web_rel="rust/control-plane/web"
-env_template_rel="rust/control-plane/.env.example"
+env_template_rel="config/bot-hub.env.template"
 starter_rel="scripts/starter.sh"
 
 usage() {

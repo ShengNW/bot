@@ -3,19 +3,32 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_DIR="$ROOT_DIR/rust/control-plane"
-APP_ENV="$APP_DIR/.env"
+CONFIG_DIR="$ROOT_DIR/config"
+ENV_TEMPLATE="$CONFIG_DIR/bot-hub.env.template"
+ENV_FILE="$CONFIG_DIR/bot-hub.env"
+LEGACY_ENV_FILE="$APP_DIR/.env"
 
 SKIP_OPENCLAW_INSTALL="${SKIP_OPENCLAW_INSTALL:-0}"
 
 echo "[step] bootstrap rust control-plane"
 bash "$ROOT_DIR/scripts/bootstrap_rust_control_plane.sh"
 
+if [[ ! -f "$ENV_TEMPLATE" ]]; then
+  cp "$APP_DIR/.env.example" "$ENV_TEMPLATE"
+  echo "[info] created $ENV_TEMPLATE from rust/control-plane/.env.example"
+fi
+
+if [[ ! -f "$ENV_FILE" ]]; then
+  cp "$ENV_TEMPLATE" "$ENV_FILE"
+  echo "[info] created $ENV_FILE from template"
+fi
+
 if ! command -v openclaw >/dev/null 2>&1; then
   if [[ "$SKIP_OPENCLAW_INSTALL" == "1" ]]; then
     echo "[warn] openclaw missing and SKIP_OPENCLAW_INSTALL=1, skip install"
   else
     echo "[step] install openclaw (node + cli)"
-    bash "$ROOT_DIR/scripts/install_openclaw.sh"
+    bash "$ROOT_DIR/scripts/setup/openclaw_prepare.sh" install
   fi
 fi
 
@@ -25,19 +38,19 @@ else
   echo "[warn] openclaw still missing; WhatsApp/DingTalk instances cannot be started until installed"
 fi
 
-if [[ ! -f "$APP_ENV" ]]; then
-  cp "$APP_DIR/.env.example" "$APP_ENV"
-  echo "[info] created $APP_ENV from template"
-fi
-
 if [[ -n "${ROUTER_API_KEY:-}" ]]; then
-  if grep -q ^ROUTER_API_KEY= "$APP_ENV"; then
-    sed -i "s|^ROUTER_API_KEY=.*$|ROUTER_API_KEY=${ROUTER_API_KEY}|" "$APP_ENV"
+  if grep -q '^ROUTER_API_KEY=' "$ENV_FILE"; then
+    sed -i "s|^ROUTER_API_KEY=.*$|ROUTER_API_KEY=${ROUTER_API_KEY}|" "$ENV_FILE"
   else
-    echo "ROUTER_API_KEY=${ROUTER_API_KEY}" >> "$APP_ENV"
+    echo "ROUTER_API_KEY=${ROUTER_API_KEY}" >> "$ENV_FILE"
   fi
-  echo "[ok] injected ROUTER_API_KEY into $APP_ENV from current shell env"
+  echo "[ok] injected ROUTER_API_KEY into $ENV_FILE from current shell env"
 fi
 
-echo "[next] if needed, edit: $APP_ENV"
-echo "[next] start full stack: bash $ROOT_DIR/scripts/run_full_stack.sh"
+if [[ ! -f "$LEGACY_ENV_FILE" ]]; then
+  cp "$ENV_FILE" "$LEGACY_ENV_FILE"
+  echo "[info] created compatibility env: $LEGACY_ENV_FILE"
+fi
+
+echo "[next] if needed, edit: $ENV_FILE"
+echo "[next] start bot plane: bash $ROOT_DIR/scripts/starter.sh start"

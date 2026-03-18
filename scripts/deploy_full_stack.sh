@@ -2,21 +2,25 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-APP_ENV="$ROOT_DIR/rust/control-plane/.env"
+ENV_FILE="$ROOT_DIR/config/bot-hub.env"
+LEGACY_ENV_FILE="$ROOT_DIR/rust/control-plane/.env"
 
 bash "$ROOT_DIR/scripts/bootstrap_full_stack.sh"
 
-if [[ -f "$APP_ENV" ]]; then
+if [[ -f "$ENV_FILE" ]]; then
   # shellcheck disable=SC1091
-  source "$APP_ENV" || true
+  source "$ENV_FILE" || true
+elif [[ -f "$LEGACY_ENV_FILE" ]]; then
+  # shellcheck disable=SC1091
+  source "$LEGACY_ENV_FILE" || true
 fi
 
 if [[ -z "${ROUTER_API_KEY:-}" ]]; then
-  echo "[warn] ROUTER_API_KEY is empty in $APP_ENV"
+  echo "[warn] ROUTER_API_KEY is empty in $ENV_FILE"
   echo "[warn] Web UI can start, but Router model list and model calls may fail until key is configured."
 fi
 
-bash "$ROOT_DIR/scripts/run_full_stack.sh"
+bash "$ROOT_DIR/scripts/starter.sh" start
 
 echo "[step] runtime status"
 bash "$ROOT_DIR/scripts/status_full_stack.sh"

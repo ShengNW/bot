@@ -2,15 +2,24 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-APP_ENV="$ROOT_DIR/rust/control-plane/.env"
+ENV_FILE="$ROOT_DIR/config/bot-hub.env"
+LEGACY_ENV_FILE="$ROOT_DIR/rust/control-plane/.env"
 PID_FILE="$ROOT_DIR/runtime/control-plane/control-plane.pid"
 LOG_FILE="$ROOT_DIR/runtime/control-plane/logs/control-plane.out.log"
 BIND="127.0.0.1:3900"
 
-if [[ -f "$APP_ENV" ]]; then
+echo "[deprecated] scripts/status_full_stack.sh 已降级为兼容入口，建议直接用 health API + starter.sh"
+
+if [[ -f "$ENV_FILE" ]]; then
   set -a
   # shellcheck disable=SC1091
-  source "$APP_ENV"
+  source "$ENV_FILE"
+  set +a
+  BIND="${BOT_HUB_BIND_ADDR:-$BIND}"
+elif [[ -f "$LEGACY_ENV_FILE" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$LEGACY_ENV_FILE"
   set +a
   BIND="${BOT_HUB_BIND_ADDR:-$BIND}"
 fi
@@ -27,8 +36,6 @@ if [[ -f "$PID_FILE" ]]; then
 else
   echo "[warn] pid file not found"
 fi
-
-ss -lntp | grep "${BIND##*:}" || true
 
 echo "[info] health:"
 curl -sS "http://$BIND/api/v1/public/health" || true
