@@ -1,307 +1,198 @@
-# bot
+# Bot Hub
 
 ## 项目名称
-OpenClaw WhatsApp Bot（A 路线：官方包 + 补丁脚本化 + 版本锁定）
+Bot Hub 控制平面（OpenClaw 多机器人统一编排）
 
 ### 项目简介
-本仓库用于在**国内 Windows + WSL** 环境快速落地 OpenClaw 机器人，模型调用走公司 Router（`gpt-5.3-codex`），并支持 WhatsApp 群消息回复。
+本仓库当前以 **Bot 平面** 为唯一生产入口：
 
-本仓库选择 **A 路线**：
-- 不 fork OpenClaw
-- 不引入 OpenClaw 子模块
-- 使用官方安装包（`npm i -g openclaw@锁定版本`）
-- 将兼容补丁与排障流程脚本化（可重复执行）
+- 提供 Web 控制台（钱包登录）
+- 统一创建/启动/停止 WhatsApp 与 DingTalk 机器人实例
+- 每实例独立 OpenClaw profile、目录、端口，互不影响
+- 模型统一走 Router（默认 `gpt-5.3-codex`）
 
 你可以把它理解为：
-- OpenClaw 官方负责核心能力
-- 本仓库负责“企业可复现部署层”（版本、配置、补丁、运维）
+
+- OpenClaw 负责“机器人执行”
+- Bot Hub 负责“机器人编排与运维”
 
 ### 功能特性
-- ✅ 版本锁定：`versions.lock`
-- ✅ 配置模板：`config/openclaw.json.template`、`config/env.example`
-- ✅ 脚本化安装：`scripts/install_openclaw.sh`
-- ✅ WhatsApp 405 兼容补丁：`scripts/apply_whatsapp_patch.sh`
-- ✅ 一键健康检查：`scripts/doctor.sh`
-- ✅ 最终验收脚本：`scripts/verify.sh`
-- ✅ v2rayN 文档主仓：`deployer/middleware/v2ray/v2rayN`（bot 仓仅保留引用）
-- ✅ 机器人工作区模板：`workspace/*.md`
-- ✅ Rust 全栈控制台（钱包登录+Web UI+多实例编排）：docs/rust-control-plane.md
-- ✅ 单命令部署入口：`scripts/deploy_full_stack.sh`
+- ✅ Web 控制台（钱包登录 + 实例管理）
+- ✅ 多实例隔离（profile/端口/目录）
+- ✅ WhatsApp 配对日志与二维码展示
+- ✅ 实例诊断与自动恢复（WhatsApp）
+- ✅ Router 模型统一配置
+- ✅ 标准启动脚本：`scripts/starter.sh`
+- ✅ 标准打包脚本：`scripts/package.sh`
+- ✅ Legacy 文档归档到 `docs/archive/legacy/`
 
-### 快速开始
+## 快速开始
 
-#### Rust 控制台（推荐）
-
-```bash
-cd /home/administrator/code/bot_hub
-bash scripts/deploy_full_stack.sh
-```
-
-浏览器访问：
-- http://127.0.0.1:3900/
-
-说明：
-- 该控制台支持钱包登录后创建/启动多个 WhatsApp 与 DingTalk 实例。
-- 实例通过 OpenClaw profile 隔离，互不覆盖配置。
-- 详细接口与排障见：`docs/rust-control-plane.md`
-
-Rust 环境说明：
-- 源码部署：不用手工安装 Rust，`scripts/bootstrap_full_stack.sh` 会自动安装 rustup/cargo。
-- 仅使用已部署服务：不需要 Rust。
-
-#### 环境要求
+### 环境要求
 
 | 依赖 | 版本要求 | 说明 |
 |------|---------|------|
-| Windows | Win10/11 | 主机环境 |
-| WSL | Ubuntu 22.04+ | 运行环境 |
-| Node.js | >= 22.12.0 | OpenClaw 依赖 |
-| npm | >= 10 | 包管理器 |
-| OpenClaw | 2026.2.26（锁定） | 机器人框架 |
-| v2rayN | 最新稳定版 | 国内网络代理（推荐） |
+| Linux / WSL2 | Ubuntu 22.04+ | 推荐运行环境 |
+| Node.js | >= 22 | OpenClaw 依赖 |
+| OpenClaw | 2026.2.26（锁定） | 通道与网关 |
+| Rust | stable（自动安装） | 控制平面编译（源码部署时） |
 
-#### 安装步骤
+### 安装步骤
 
-1. **克隆项目（在 WSL）**
+1. **克隆项目**
 ```bash
 git clone git@github.com:ShengNW/bot.git
 cd bot
 ```
 
-2. **准备环境变量文件**
+2. **一键部署（推荐）**
 ```bash
-cp config/env.example .env.local
-# 编辑 .env.local，至少填写 ROUTER_API_KEY
+bash scripts/deploy_full_stack.sh
 ```
 
-3. **加载环境变量**
-```bash
-set -a
-source .env.local
-set +a
-```
+3. **打开控制台**
+- 浏览器访问：`http://127.0.0.1:3900/`
+- 连接钱包后即可创建实例。
 
-4. **安装 Node + OpenClaw（锁定版本）**
-```bash
-bash scripts/install_openclaw.sh
-```
+4. **首次创建 WhatsApp 实例后配对**
+- 在实例行点击“配对”
+- 在日志面板扫码完成 linked
 
-5. **配置 OpenClaw（Router + WhatsApp 策略）**
-```bash
-bash scripts/configure_openclaw.sh
-```
+### 配置说明
 
-6. **应用 WhatsApp 兼容补丁（405 修复）**
-```bash
-bash scripts/apply_whatsapp_patch.sh
-```
+主配置文件：`config/bot-hub.env`
 
-7. **扫码登录 WhatsApp**
-```bash
-openclaw channels login --channel whatsapp --verbose
-```
+关键变量：
 
-8. **执行健康检查和验收**
-```bash
-bash scripts/doctor.sh
-bash scripts/verify.sh
-```
-
-#### 配置说明
-
-1. **环境变量（推荐）**
-- 文件：`.env.local`（由 `config/env.example` 复制）
-- 关键项：
 ```text
-ROUTER_API_KEY=你的密钥
+BOT_HUB_BIND_ADDR=127.0.0.1:3900
 ROUTER_BASE_URL=https://test-router.yeying.pub/v1
-ROUTER_MODEL=gpt-5.3-codex
-OPENCLAW_GATEWAY_TOKEN=可选
-```
-
-2. **OpenClaw 运行配置位置**
-```text
-~/.openclaw/openclaw.json
-```
-
-3. **模板说明**
-- `config/openclaw.json.template` 是脱敏模板，不直接带真实密钥。
-- `scripts/configure_openclaw.sh` 会把关键配置写入 `~/.openclaw/openclaw.json`。
-
-### 本地开发
-
-#### 开发环境搭建
-
-1. **推荐工具**
-- VSCode（Remote-WSL）
-- Windows Terminal / PowerShell
-
-2. **基础自检**
-```bash
-whoami
-hostname
-node -v
-openclaw --version
-```
-
-3. **网络自检（国内环境）**
-- 先按 deployer 主文档完成 Windows 侧桥接（见下方 API 文档中的 v2rayN 文档仓）。
-- 再在 WSL 验证：
-```bash
-HOST_IP=$(ip route | awk '/default/ {print $3; exit}')
-curl --socks5-hostname "$HOST_IP:10810" https://api.ipify.org
-```
-
-#### 运行项目
-
-1. **查看渠道状态**
-```bash
-openclaw channels status
-```
-
-2. **启动网关（调试模式）**
-```bash
-openclaw gateway run --allow-unconfigured
-```
-
-3. **另一终端检查健康**
-```bash
-openclaw gateway --token "$OPENCLAW_GATEWAY_TOKEN" health
-```
-
-4. **模型链路试跑**
-```bash
-openclaw agent --local --to +15555550123 --message "ping" --thinking off --timeout 120 --json
-```
-
-#### 调试方法
-
-1. **Router 模型列表检查**
-```bash
-curl -sS "$ROUTER_BASE_URL/models" -H "Authorization: Bearer $ROUTER_API_KEY"
-```
-
-2. **渠道日志**
-```bash
-openclaw channels logs --channel whatsapp --lines 120
-```
-
-3. **常见故障速查**
-```text
-- 405 Method Not Allowed：先跑 scripts/apply_whatsapp_patch.sh
-- 503 所有供应商暂时不可用：检查 router.api 是否为 openai-responses
-- Failed to extract accountId from token：检查 API wire 模式
-- not linked：重新执行 channels login 扫码
-```
-
-### 生产部署
-
-#### 部署前准备
-
-**检查清单：**
-- [ ] `.env.local` 已配置且未泄露
-- [ ] 版本与 `versions.lock` 一致
-- [ ] v2rayN 与 portproxy 已按文档配置
-- [ ] WhatsApp 账号可扫码登录
-- [ ] Router key 有效
-
-#### 部署步骤
-
-1. 拉代码并进入目录：
-```bash
-git clone git@github.com:ShengNW/bot.git
-cd bot
-```
-
-2. 加载变量并安装：
-```bash
-cp config/env.example .env.local
-set -a && source .env.local && set +a
-bash scripts/install_openclaw.sh
-bash scripts/configure_openclaw.sh
-bash scripts/apply_whatsapp_patch.sh
-```
-
-3. 扫码并验收：
-```bash
-openclaw channels login --channel whatsapp --verbose
-bash scripts/verify.sh
-```
-
-4. 运行服务：
-```bash
-openclaw gateway run --allow-unconfigured
-```
-
-#### 环境变量配置
-
-建议最少配置：
-```text
 ROUTER_API_KEY=
-ROUTER_BASE_URL=https://test-router.yeying.pub/v1
-ROUTER_MODEL=gpt-5.3-codex
-OPENCLAW_GATEWAY_TOKEN=
+BOT_HUB_DEFAULT_MODEL=gpt-5.3-codex
+BOT_HUB_ADMIN_TOKEN=change-me-admin-token
+BOT_HUB_INTERNAL_TOKEN=change-me-internal-token
+BOT_HUB_INSTANCE_PORT_START=18800
+BOT_HUB_INSTANCE_PORT_END=18999
 ```
 
-代理（可选）：
-```text
-ALL_PROXY=socks5h://<wsl-gateway-ip>:10810
-http_proxy=$ALL_PROXY
-https_proxy=$ALL_PROXY
-```
+> `scripts/bootstrap_full_stack.sh` 会自动从模板创建该文件。
 
-#### 健康检查
+## 本地开发
 
-执行：
-```bash
-bash scripts/doctor.sh
-bash scripts/verify.sh
-```
-
-目标状态：
-```text
-WhatsApp default: enabled, configured, linked, running, connected
-Gateway Health: OK
-```
-
-### API文档
-- deployer v2rayN 文档：https://github.com/ShengNW/deployer/tree/main/middleware/v2ray/v2rayN
-- OpenClaw CLI：https://docs.openclaw.ai/cli
-- Router API（OpenAI-compatible）：`https://test-router.yeying.pub/v1`
-
-### 测试
+### 开发环境搭建
 
 ```bash
-# 1) 模型可用
-curl -sS "$ROUTER_BASE_URL/models" -H "Authorization: Bearer $ROUTER_API_KEY"
-
-# 2) 渠道在线
-openclaw channels status
-
-# 3) Agent 回包
-openclaw agent --local --to +15555550123 --message "你好" --thinking off --timeout 120 --json
+bash scripts/bootstrap_full_stack.sh
 ```
 
-### 贡献指南
+可选：仅准备 OpenClaw
 
-1. **创建分支**
 ```bash
-git checkout -b feat/<topic>
+bash scripts/setup/openclaw_prepare.sh install
+bash scripts/setup/openclaw_prepare.sh configure
+bash scripts/setup/openclaw_prepare.sh patch
 ```
 
-2. **提交规范**
-- 禁止提交真实密钥
-- 脚本改动需保留幂等特性
-- 文档改动必须给出可复制命令
+### 运行项目
 
-3. **提交与推送**
 ```bash
-git add .
-git commit -m "feat: <summary>"
-git push origin feat/<topic>
+bash scripts/starter.sh start
+bash scripts/starter.sh restart
+bash scripts/starter.sh stop
 ```
 
-4. **PR 要求**
-- 复现步骤
-- 关键输出（脱敏）
-- 影响范围与回滚方案
+### 调试方法
+
+```bash
+# 基础体检
+bash scripts/doctor_full_stack.sh
+
+# 服务状态（兼容入口）
+bash scripts/status_full_stack.sh
+
+# 健康接口
+curl -sS http://127.0.0.1:3900/api/v1/public/health
+
+# 若出现 "openclaw: command not found"，执行下面修复
+OPENCLAW_BIN="$(npm config get prefix)/bin/openclaw"
+if [[ -x "$OPENCLAW_BIN" ]]; then
+  sudo ln -sf "$OPENCLAW_BIN" /usr/local/bin/openclaw
+  openclaw --version
+fi
+```
+
+## 生产部署
+
+### 部署前准备
+
+- [ ] `config/bot-hub.env` 已配置 `ROUTER_API_KEY`
+- [ ] OpenClaw 可执行：`openclaw --version`
+- [ ] 机器网络满足 Router 与通道连接要求
+- [ ] 已完成钱包登录链路可用性验证
+
+### 部署步骤
+
+#### 方式一：源码部署（推荐内网研发）
+
+```bash
+git clone git@github.com:ShengNW/bot.git
+cd bot
+bash scripts/deploy_full_stack.sh
+```
+
+#### 方式二：安装包部署（无需 Rust）
+
+```bash
+# 在构建机打包
+bash scripts/package.sh
+
+# 在目标机解压后
+cd <pkg-dir>
+cp config/bot-hub.env.template config/bot-hub.env
+# 编辑 config/bot-hub.env
+bash scripts/starter.sh start
+```
+
+### 环境变量配置
+
+见 `config/bot-hub.env`（源码）或 `config/bot-hub.env.template`（安装包）。
+
+### 健康检查
+
+```bash
+curl -sS http://127.0.0.1:3900/api/v1/public/health
+curl -sS http://127.0.0.1:3900/api/v1/public/version
+```
+
+## API文档
+- 控制平面总览：`docs/rust-control-plane.md`
+- 详细设计：`docs/bot-hub-control-plane-detailed-design.md`
+- 旧单 profile 手册（归档）：`docs/archive/legacy/`
+
+## 测试
+
+```bash
+# 1) 启动可用
+bash scripts/starter.sh start
+
+# 2) 健康可用
+curl -sS http://127.0.0.1:3900/api/v1/public/health
+
+# 3) 页面可访问
+curl -sSI http://127.0.0.1:3900/ | head -n 5
+```
+
+## 贡献指南
+
+1. **提交规范**
+- 使用：`<type>(scope): <summary>`
+- 示例：`docs(readme): 收口 bot 平面启动路径`
+
+2. **提交要求**
+- 不提交任何真实密钥
+- 不破坏 `scripts/starter.sh` / `scripts/package.sh` 主路径
+- 若改动接口，更新 `docs/rust-control-plane.md`
+
+3. **Legacy 处理原则**
+- 旧路径先“降级兼容”，再“物理删除”
+- 删除前需给出回滚路径与验证记录

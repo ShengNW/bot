@@ -2,8 +2,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-APP_DIR="$ROOT_DIR/rust/control-plane"
-ENV_FILE="$APP_DIR/.env"
+ENV_FILE="$ROOT_DIR/config/bot-hub.env"
+LEGACY_ENV_FILE="$ROOT_DIR/rust/control-plane/.env"
 
 echo "[doctor] repo=$ROOT_DIR"
 
@@ -32,10 +32,17 @@ else
   echo "[warn] openclaw missing"
 fi
 
+ACTIVE_ENV=""
 if [[ -f "$ENV_FILE" ]]; then
-  echo "[ok] env file exists: $ENV_FILE"
+  ACTIVE_ENV="$ENV_FILE"
+elif [[ -f "$LEGACY_ENV_FILE" ]]; then
+  ACTIVE_ENV="$LEGACY_ENV_FILE"
+fi
+
+if [[ -n "$ACTIVE_ENV" ]]; then
+  echo "[ok] env file exists: $ACTIVE_ENV"
   # shellcheck disable=SC1091
-  source "$ENV_FILE" || true
+  source "$ACTIVE_ENV" || true
   if [[ -n "${ROUTER_API_KEY:-}" ]]; then
     echo "[ok] ROUTER_API_KEY configured"
     ROUTER_MODELS_URL="${ROUTER_BASE_URL:-https://test-router.yeying.pub/v1}/models"
@@ -46,11 +53,11 @@ if [[ -f "$ENV_FILE" ]]; then
       echo "[warn] router endpoint request failed: $ROUTER_MODELS_URL"
     fi
   else
-    echo "[warn] ROUTER_API_KEY is empty in $ENV_FILE"
+    echo "[warn] ROUTER_API_KEY is empty in $ACTIVE_ENV"
   fi
 else
   echo "[warn] env file missing: $ENV_FILE"
 fi
 
 echo "[next] bootstrap: bash $ROOT_DIR/scripts/bootstrap_full_stack.sh"
-echo "[next] run:       bash $ROOT_DIR/scripts/run_full_stack.sh"
+echo "[next] run:       bash $ROOT_DIR/scripts/starter.sh start"
