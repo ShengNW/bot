@@ -51,10 +51,32 @@ sequenceDiagram
     participant GitHub as GitHub 服务
 
     rect rgb(245, 250, 255)
-        note over User,GitHub: 链路一：飞书 @机器人 创建 GitHub Issue
+        note over User,GitHub: 链路一：飞书 @机器人 创建 GitHub Issue（创建前确认）
+
         User->>FeishuBot: @机器人 仓库 + Issue 需求
         FeishuBot->>OpenClaw: 推送群消息事件
         OpenClaw->>OpenClaw: 解析仓库、需求、Issue 模板
+
+        rect rgb(255, 250, 240)
+            note over User,OpenClaw: 新增确认环节：Issue 创建计划确认循环
+
+            OpenClaw->>OpenClaw: 分析准备创建怎样的 Issue<br/>生成标题、正文、标签、负责人、拆解步骤/方案
+            OpenClaw-->>FeishuBot: 返回 Issue 创建计划
+            FeishuBot-->>User: 群内展示 Issue 草案与创建计划<br/>提示：满意后 @机器人 /confirm
+
+            loop 用户继续沟通，直到满意
+                User->>FeishuBot: @机器人 补充/修改需求
+                FeishuBot->>OpenClaw: 推送补充消息事件
+                OpenClaw->>OpenClaw: 基于上下文更新 Issue 创建计划
+                OpenClaw-->>FeishuBot: 返回新版 Issue 草案/方案
+                FeishuBot-->>User: 群内展示新版创建计划
+            end
+
+            User->>FeishuBot: @机器人 /confirm
+            FeishuBot->>OpenClaw: 推送确认消息事件
+            OpenClaw->>OpenClaw: 确认当前 Issue 创建计划<br/>冻结最终 Issue payload
+        end
+
         OpenClaw->>Ghapp: 请求有效 Installation Token
         Ghapp->>Ghapp: 用 App 私钥本地签名 JWT
         Ghapp->>GitHubApp: 用 JWT 请求 Installation Token
