@@ -44,12 +44,9 @@ sequenceDiagram
     autonumber
 
     actor User as 飞书用户
-    participant FeishuBot as 飞书机器人
-    participant OpenClaw as OpenClaw
-    participant Middleware as 薄中间件
-    participant Codex as Codex / LLM
+    participant FeishuBot as 飞书backend
+    participant OpenClaw as FeiShu_OpenClaw
     participant Ghapp as ghapp-cli
-    participant LocalEnv as 本地 git / gh 环境
     participant GitHubApp as GitHub App API
     participant GitHub as GitHub 服务
 
@@ -68,27 +65,6 @@ sequenceDiagram
         GitHub-->>OpenClaw: 返回 Issue 链接
         OpenClaw-->>FeishuBot: 回传创建结果
         FeishuBot-->>User: 群内返回 Issue 地址
-    end
-
-    rect rgb(250, 248, 240)
-        note over User,GitHub: 链路二：GitHub Webhook 触发 Codex 改代码并提 PR
-        GitHub->>Middleware: Webhook 事件
-        Middleware->>Codex: 请求修改 / 生成代码
-        Codex-->>Middleware: 返回代码变更方案
-        Middleware->>Ghapp: 请求有效 Installation Token
-        Ghapp->>Ghapp: 检查缓存 Token 是否有效
-        alt Token 已过期或不存在
-            Ghapp->>Ghapp: 本地签名 JWT
-            Ghapp->>GitHubApp: 换取新的 Installation Token
-            GitHubApp-->>Ghapp: 返回短期 Token
-        else Token 仍有效
-            Ghapp-->>Middleware: 复用缓存 Token
-        end
-        Ghapp->>LocalEnv: 配置 GH_TOKEN / git 认证
-        Middleware->>LocalEnv: git add / commit / push
-        LocalEnv->>GitHub: 推送 bot 分支
-        Middleware->>GitHub: gh pr create 创建 PR
-        GitHub-->>Middleware: 返回 PR 链接
     end
 ```
 
