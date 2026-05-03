@@ -1,3 +1,11 @@
+# GitHub 机器人方案
+
+这份文档只讲方案、链路和架构，不讲手把手部署。
+
+如果你要在一台已经安装 OpenClaw 的机器上把 Issue 机器人手动跑起来，先看 [github机器人部署手册.md](github机器人部署手册.md)。
+
+当前这套 MVP 的示例代码统一放在 `example/example_feishuGitIssue/`，默认不依赖 GitHub webhook。
+
 ```mermaid
 flowchart TB
     %% 分层泳道角色划分：架构职责解耦
